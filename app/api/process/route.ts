@@ -5,7 +5,7 @@ import * as XLSX from "xlsx";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-const GEMINI_MODEL = "gemini-2.0-flash";
+const GEMINI_MODEL = "gemini-3.6-flash";
 
 const PROMPT = `You are transcribing a single photographed page for a newsroom tool.
 
