@@ -179,6 +179,11 @@ button {
   box-shadow: 0 2px 0 rgba(90, 20, 30, 0.4);
 }
 
+.cta-pill--sm {
+  font-size: 12.5px;
+  padding: 6px 13px;
+}
+
 .dropzone {
   flex: 1;
   border: 1.5px dashed var(--crimson-soft);
@@ -376,6 +381,86 @@ button {
   font-size: 12.5px;
   color: var(--ink-soft);
   text-align: center;
+}
+
+/* ---- pravaah toggle bar ---- */
+
+.pravaah-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  border: 1px solid var(--line);
+  background: white;
+  padding: 12px 18px;
+  margin-bottom: 20px;
+}
+
+.pravaah-switch {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.pravaah-switch input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.pravaah-track {
+  width: 38px;
+  height: 21px;
+  background: var(--line);
+  border-radius: 100px;
+  position: relative;
+  transition: background 0.15s ease;
+  flex-shrink: 0;
+}
+
+.pravaah-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 17px;
+  height: 17px;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  transition: transform 0.15s ease;
+}
+
+.pravaah-switch input:checked + .pravaah-track {
+  background: var(--crimson);
+}
+
+.pravaah-switch input:checked + .pravaah-track .pravaah-thumb {
+  transform: translateX(17px);
+}
+
+.pravaah-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.pravaah-author {
+  flex: 1;
+  min-width: 200px;
+  border: none;
+  border-bottom: 1.5px solid var(--crimson-soft);
+  background: transparent;
+  padding: 6px 2px;
+  font-size: 14px;
+  color: var(--ink);
+  font-family: inherit;
+}
+
+.pravaah-author:focus {
+  outline: none;
+  border-bottom-color: var(--crimson);
 }
 
 /* ---- multi-page queue ---- */

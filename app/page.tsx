@@ -16,12 +16,22 @@ type Page = {
   errorMsg?: string;
 };
 
+type ComposeResult = {
+  status: "idle" | "loading" | "done" | "error";
+  downloadUrl?: string;
+  downloadName?: string;
+  errorMsg?: string;
+};
+
 let nextId = 0;
 
 export default function Home() {
   const [pages, setPages] = useState<Page[]>([]);
   const [dragging, setDragging] = useState(false);
   const [converting, setConverting] = useState(false);
+  const [composeMode, setComposeMode] = useState(false);
+  const [authorName, setAuthorName] = useState("Bhawnesh Jain, Rajasthan Patrika");
+  const [composeResult, setComposeResult] = useState<ComposeResult>({ status: "idle" });
   const inputRef = useRef<HTMLInputElement>(null);
 
   const addFiles = useCallback((files: FileList | File[] | null | undefined) => {
@@ -121,8 +131,33 @@ export default function Home() {
     a.click();
   };
 
+  const composeArticle = async () => {
+    if (!pages.length) return;
+    setComposeResult({ status: "loading" });
+    try {
+      const form = new FormData();
+      pages.forEach((p) => form.append("file", p.file));
+      form.append("author", authorName || "Bhawnesh Jain, Rajasthan Patrika");
+      const res = await fetch("/api/compose", { method: "POST", body: form });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || "Couldn't compose the write-up.");
+      }
+      const nameHeader = res.headers.get("X-Result-Filename") || "pravaah.docx";
+      const blob = await res.blob();
+      setComposeResult({
+        status: "done",
+        downloadUrl: URL.createObjectURL(blob),
+        downloadName: nameHeader,
+      });
+    } catch (err: any) {
+      setComposeResult({ status: "error", errorMsg: err.message || "Something went wrong." });
+    }
+  };
+
   const clearAll = () => {
     setPages([]);
+    setComposeResult({ status: "idle" });
     if (inputRef.current) inputRef.current.value = "";
   };
 
@@ -157,6 +192,29 @@ export default function Home() {
         </svg>
       </div>
 
+      <div className="pravaah-bar">
+        <label className="pravaah-switch">
+          <input
+            type="checkbox"
+            checked={composeMode}
+            onChange={(e) => setComposeMode(e.target.checked)}
+          />
+          <span className="pravaah-track">
+            <span className="pravaah-thumb" />
+          </span>
+          <span className="pravaah-label">Points se pravaah likhein</span>
+        </label>
+        {composeMode && (
+          <input
+            className="pravaah-author"
+            type="text"
+            value={authorName}
+            onChange={(e) => setAuthorName(e.target.value)}
+            placeholder="Kiske liye likhna hai"
+          />
+        )}
+      </div>
+
       <div className="spread">
         <section
           className="pane pane--left"
@@ -167,8 +225,6 @@ export default function Home() {
           onDragLeave={() => setDragging(false)}
           onDrop={onDrop}
         >
-          <span className="cta-pill cta-pill--gold">Upload File Here</span>
-
           {pages.length > 0 && (
             <div className="page-list">
               {pages.map((p, i) => (
@@ -193,7 +249,9 @@ export default function Home() {
           )}
 
           <label className={`dropzone ${dragging ? "dragging" : ""} ${pages.length ? "dropzone-compact" : ""}`}>
-            <h3>{pages.length ? "Add another page" : "Drop pages here"}</h3>
+            <span className={`cta-pill cta-pill--gold ${pages.length ? "cta-pill--sm" : ""}`}>
+              {pages.length ? "+ Add Page" : "Upload File Here"}
+            </span>
             <p>
               {pages.length
                 ? "Drag more in, or tap to browse."
@@ -211,16 +269,24 @@ export default function Home() {
           <div className="actions">
             <button
               className="btn btn-primary"
-              disabled={!hasConvertible || converting}
-              onClick={convertAll}
+              disabled={
+                composeMode
+                  ? !pages.length || composeResult.status === "loading"
+                  : !hasConvertible || converting
+              }
+              onClick={composeMode ? composeArticle : convertAll}
             >
-              {converting
+              {composeMode
+                ? composeResult.status === "loading"
+                  ? "Pravaah likh rahe hain…"
+                  : "Pravaah Likhein"
+                : converting
                 ? "Reading your pages…"
                 : doneCount > 0
                 ? `Convert remaining (${pages.filter((p) => p.status === "ready" || p.status === "error").length})`
                 : `Convert ${pages.length > 1 ? `all ${pages.length} pages` : "page"}`}
             </button>
-            {pages.length > 0 && !converting && (
+            {pages.length > 0 && !converting && composeResult.status !== "loading" && (
               <button className="btn btn-ghost" onClick={clearAll}>
                 Clear all
               </button>
@@ -229,10 +295,47 @@ export default function Home() {
         </section>
 
         <section className="pane pane--right">
-          <span className="cta-pill cta-pill--crimson">Your File Is Here</span>
-
-          {pages.length === 0 ? (
+          {composeMode ? (
+            composeResult.status === "idle" ? (
+              <div className="result-slot idle">
+                <span className="cta-pill cta-pill--crimson">Your File Is Here</span>
+                <svg className="idle-illustration" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <rect x="24" y="12" width="40" height="52" fill="white" stroke="var(--line)" strokeWidth="1.6" />
+                  <rect x="34" y="22" width="42" height="54" fill="var(--paper)" stroke="var(--ink)" strokeWidth="1.6" />
+                  <line x1="42" y1="36" x2="68" y2="36" stroke="var(--ink-soft)" strokeWidth="1.4" />
+                  <line x1="42" y1="45" x2="68" y2="45" stroke="var(--ink-soft)" strokeWidth="1.4" />
+                  <line x1="42" y1="54" x2="60" y2="54" stroke="var(--crimson)" strokeWidth="1.4" />
+                  <line x1="42" y1="63" x2="64" y2="63" stroke="var(--ink-soft)" strokeWidth="1.4" />
+                </svg>
+                <p>Upload the points and press "Pravaah Likhein" — one flowing write-up comes back here.</p>
+              </div>
+            ) : composeResult.status === "loading" ? (
+              <div className="result-slot">
+                <span className="cta-pill cta-pill--crimson cta-pill--sm">Your File Is Here</span>
+                <div className="spinner" />
+                <p style={{ color: "var(--ink-soft)", fontSize: 14 }}>
+                  Reading the points and writing it up for {authorName || "your author"}…
+                </p>
+              </div>
+            ) : composeResult.status === "done" ? (
+              <div className="result-slot">
+                <div className="result-card">
+                  <p className="kind">pravaah · {authorName}</p>
+                  <h3>Write-up ready</h3>
+                  <p>Composed from {pages.length} page{pages.length > 1 ? "s" : ""} of points.</p>
+                  <a href={composeResult.downloadUrl} download={composeResult.downloadName} className="btn btn-download">
+                    Download {composeResult.downloadName}
+                  </a>
+                </div>
+              </div>
+            ) : (
+              <div className="result-slot idle">
+                <p className="error-note">{composeResult.errorMsg}</p>
+              </div>
+            )
+          ) : pages.length === 0 ? (
             <div className="result-slot idle">
+              <span className="cta-pill cta-pill--crimson">Your File Is Here</span>
               <svg className="idle-illustration" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                 <rect x="24" y="12" width="40" height="52" fill="white" stroke="var(--line)" strokeWidth="1.6" />
                 <rect x="34" y="22" width="42" height="54" fill="var(--paper)" stroke="var(--ink)" strokeWidth="1.6" />
@@ -245,6 +348,9 @@ export default function Home() {
             </div>
           ) : (
             <>
+              <span className="cta-pill cta-pill--crimson cta-pill--sm" style={{ alignSelf: "flex-start", marginBottom: 14 }}>
+                Your File Is Here
+              </span>
               <div className="result-list">
                 {pages.map((p, i) => (
                   <div className={`result-row ${p.status}`} key={p.id}>
