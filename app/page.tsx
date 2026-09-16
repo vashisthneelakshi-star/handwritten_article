@@ -132,16 +132,29 @@ export default function Home() {
   return (
     <main className="shell">
       <div className="masthead">
-        <div>
+        <div className="masthead-text">
+          <span className="copy-badge">
+            {pages.length ? `${pages.length} page${pages.length > 1 ? "s" : ""} in queue` : "handwriting → files"}
+          </span>
           <h1>Likhavat</h1>
           <p>
             Upload handwritten pages or spreadsheet screenshots — Hindi, English, or
             mixed. Each page comes back as its own Word or Excel file.
           </p>
         </div>
-        <span className="copy-badge">
-          {pages.length ? `${pages.length} page${pages.length > 1 ? "s" : ""}` : "no pages yet"}
-        </span>
+        <svg className="hero-mark" viewBox="0 0 220 120" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M8 78 C 24 40, 40 100, 56 60 S 88 30, 104 66" stroke="var(--ink)" strokeWidth="2.4" strokeLinecap="round" fill="none" />
+          <path d="M8 92 C 30 76, 46 100, 64 82 S 92 62, 104 84" stroke="var(--crimson)" strokeWidth="2.4" strokeLinecap="round" fill="none" opacity="0.75" />
+          <path d="M120 66 L 152 66" stroke="var(--ink-soft)" strokeWidth="1.6" strokeDasharray="1 6" strokeLinecap="round" />
+          <path d="M144 59 L 154 66 L 144 73" stroke="var(--ink-soft)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+          <g transform="translate(168,34)">
+            <rect x="0" y="0" width="44" height="58" fill="var(--paper)" stroke="var(--ink)" strokeWidth="1.6" />
+            <line x1="8" y1="16" x2="36" y2="16" stroke="var(--ink)" strokeWidth="1.4" />
+            <line x1="8" y1="26" x2="36" y2="26" stroke="var(--ink)" strokeWidth="1.4" />
+            <line x1="8" y1="36" x2="28" y2="36" stroke="var(--crimson)" strokeWidth="1.4" />
+            <line x1="8" y1="46" x2="32" y2="46" stroke="var(--ink)" strokeWidth="1.4" />
+          </g>
+        </svg>
       </div>
 
       <div className="spread">
@@ -220,7 +233,14 @@ export default function Home() {
 
           {pages.length === 0 ? (
             <div className="result-slot idle">
-              <div className="idle-mark" />
+              <svg className="idle-illustration" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <rect x="24" y="12" width="40" height="52" fill="white" stroke="var(--line)" strokeWidth="1.6" />
+                <rect x="34" y="22" width="42" height="54" fill="var(--paper)" stroke="var(--ink)" strokeWidth="1.6" />
+                <line x1="42" y1="36" x2="68" y2="36" stroke="var(--ink-soft)" strokeWidth="1.4" />
+                <line x1="42" y1="45" x2="68" y2="45" stroke="var(--ink-soft)" strokeWidth="1.4" />
+                <line x1="42" y1="54" x2="60" y2="54" stroke="var(--crimson)" strokeWidth="1.4" />
+                <line x1="42" y1="63" x2="64" y2="63" stroke="var(--ink-soft)" strokeWidth="1.4" />
+              </svg>
               <p>Converted Word and Excel files will appear here, numbered to match your pages.</p>
             </div>
           ) : (
