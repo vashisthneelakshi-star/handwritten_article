@@ -5,6 +5,8 @@
   --ink-soft: #5a544c;
   --crimson: #a6283c;
   --crimson-soft: #c76a78;
+  --gold: #b9791f;
+  --gold-soft: #e0a23e;
   --rule-blue: #b9c4d6;
   --line: #e4ddcd;
 }
@@ -155,6 +157,28 @@ button {
   margin-bottom: 18px;
 }
 
+.cta-pill {
+  display: inline-block;
+  font-family: "IBM Plex Sans", sans-serif;
+  font-weight: 600;
+  font-size: 14.5px;
+  color: white;
+  padding: 9px 18px;
+  border-radius: 3px;
+  margin-bottom: 20px;
+  letter-spacing: 0.01em;
+}
+
+.cta-pill--gold {
+  background: linear-gradient(180deg, var(--gold-soft), var(--gold));
+  box-shadow: 0 2px 0 rgba(120, 78, 10, 0.4);
+}
+
+.cta-pill--crimson {
+  background: linear-gradient(180deg, #c1495c, var(--crimson));
+  box-shadow: 0 2px 0 rgba(90, 20, 30, 0.4);
+}
+
 .dropzone {
   flex: 1;
   border: 1.5px dashed var(--crimson-soft);
@@ -298,11 +322,12 @@ button {
 }
 
 .btn-primary {
-  background: linear-gradient(180deg, #2c2824, var(--ink));
-  color: var(--cream);
+  background: linear-gradient(180deg, var(--gold-soft), var(--gold));
+  color: white;
   width: 100%;
-  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.35);
+  box-shadow: 0 2px 0 rgba(120, 78, 10, 0.4);
   letter-spacing: 0.01em;
+  font-weight: 600;
 }
 
 .btn-primary:not(:disabled):hover {
@@ -311,7 +336,7 @@ button {
 
 .btn-primary:not(:disabled):active {
   transform: translateY(1px);
-  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+  box-shadow: 0 1px 0 rgba(120, 78, 10, 0.4);
 }
 
 .result-slot.idle .idle-illustration {

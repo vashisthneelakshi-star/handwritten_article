@@ -167,7 +167,7 @@ export default function Home() {
           onDragLeave={() => setDragging(false)}
           onDrop={onDrop}
         >
-          <p className="pane-label">your pages</p>
+          <span className="cta-pill cta-pill--gold">Upload File Here</span>
 
           {pages.length > 0 && (
             <div className="page-list">
@@ -229,7 +229,7 @@ export default function Home() {
         </section>
 
         <section className="pane pane--right">
-          <p className="pane-label">your files</p>
+          <span className="cta-pill cta-pill--crimson">Your File Is Here</span>
 
           {pages.length === 0 ? (
             <div className="result-slot idle">
