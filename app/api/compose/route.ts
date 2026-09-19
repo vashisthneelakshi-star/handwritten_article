@@ -96,7 +96,9 @@ VOICE: Sharply critical of negligence, hypocrisy, and failure to act — aimed a
 
 QUESTIONS: Use direct rhetorical questions aimed at the responsible party to press accountability — e.g. "आखिर जिम्मेदार कौन?", "क्या इसकी किसी को चिंता है?", "किसे शर्म आएगी?" — sprinkled through the piece, not just at the end.
 
-LANGUAGE: Conversational, everyday Hindi — not formal or heavily Sanskritized. Leave common English/administrative terms in English where that's how it's actually written ("इन्फ्रास्ट्रक्चर", "वीआईपी कल्चर"). Mix short punchy sentences with longer explanatory ones for rhythm. Use idioms sparingly but sharply where they land (कान पर जूं तक न रेंगना, नाक कट जाना, सांप निकल जाने के बाद लकीर पीटना — do not overuse, one or two per piece at most).
+LANGUAGE: Pure, conversational Hindi — not formal or heavily Sanskritized, but also not casually Hinglish. Prefer the Hindi word every time a natural one exists (रोज not डेली, उपकरण not इक्विपमेंट, जांच not चेक). Leave a term in English ONLY when it is a proper noun/acronym (CBI, GST, NOC) or a standard administrative/technical term that has no real Hindi equivalent in Rajasthan Patrika's own print usage ("इन्फ्रास्ट्रक्चर", "वीआईपी कल्चर", "ब्लॉक चेन") — never routine everyday words. When unsure, default to Hindi. Mix short punchy sentences with longer explanatory ones for rhythm. Use idioms sparingly but sharply where they land (कान पर जूं तक न रेंगना, नाक कट जाना, सांप निकल जाने के बाद लकीर पीटना — do not overuse, one or two per piece at most).
+
+COMPLETENESS: Treat every distinct fact given in the points as something that must be reflected in the piece — dates, names, numbers, specific procedural questions (who approved what, how, since when). Do not silently drop a point because it's inconvenient or complicates the narrative. If the points implicate more than one party (e.g. both a business/public side AND an administrative/regulatory side — permits, inspections, approvals, enforcement), the piece must interrogate BOTH with equal specificity and equal weight, not lean almost entirely on one and gesture at the other in a single throwaway line. Read every point before writing and make sure each one lands somewhere in the piece.
 
 Here is one real example of this exact voice, for calibration only — do not reuse its content:
 
@@ -114,7 +116,7 @@ Here is one real example of this exact voice, for calibration only — do not re
 
   const composePrompt = `${STYLE_GUIDE}
 
-Below are rough handwritten points collected for ${author}. Write them up as one Pravaah-style piece in this exact voice. Use only what the points give you — do not invent facts, figures, or incidents beyond what's provided; if the points don't give you enough specifics to match this style fully, work with what's there rather than fabricating detail. Do not add a title, byline, or heading — just the body paragraphs.
+Below are rough handwritten points collected for ${author}. Write them up as one Pravaah-style piece in this exact voice. Use only what the points give you — do not invent facts, figures, or incidents beyond what's provided; if the points don't give you enough specifics to match this style fully, work with what's there rather than fabricating detail. Before writing, mentally list every distinct point given, then make sure each one is actually used in the piece — none dropped. Do not add a title, byline, or heading — just the body paragraphs.
 
 Points:
 ${combinedPoints}

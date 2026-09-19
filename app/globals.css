@@ -3,10 +3,10 @@
   --paper: #fbf9f4;
   --ink: #201d1a;
   --ink-soft: #5a544c;
-  --crimson: #a6283c;
-  --crimson-soft: #c76a78;
-  --gold: #b9791f;
-  --gold-soft: #e0a23e;
+  --maroon: #6e1220;
+  --maroon-soft: #9c3d47;
+  --gold: #a9781f;
+  --gold-soft: #d4a537;
   --rule-blue: #b9c4d6;
   --line: #e4ddcd;
 }
@@ -76,12 +76,12 @@ button {
 .copy-badge {
   font-family: "IBM Plex Mono", monospace;
   font-size: 11.5px;
-  color: var(--crimson);
-  border: 1px solid var(--crimson-soft);
+  color: var(--maroon);
+  border: 1px solid var(--maroon-soft);
   border-radius: 100px;
   padding: 5px 12px;
   white-space: nowrap;
-  background: rgba(166, 40, 60, 0.06);
+  background: rgba(110, 18, 32, 0.06);
 }
 
 .hero-mark {
@@ -107,7 +107,7 @@ button {
   gap: 0;
   border: 1.5px solid var(--ink);
   background: var(--paper);
-  box-shadow: 8px 8px 0 rgba(166, 40, 60, 0.12), 0 20px 40px rgba(32, 29, 26, 0.08);
+  box-shadow: 8px 8px 0 rgba(110, 18, 32, 0.12), 0 20px 40px rgba(32, 29, 26, 0.08);
 }
 
 @media (max-width: 780px) {
@@ -146,7 +146,7 @@ button {
   bottom: 0;
   left: 56px;
   width: 1px;
-  background: var(--crimson-soft);
+  background: var(--maroon-soft);
   opacity: 0.55;
 }
 
@@ -174,9 +174,9 @@ button {
   box-shadow: 0 2px 0 rgba(120, 78, 10, 0.4);
 }
 
-.cta-pill--crimson {
-  background: linear-gradient(180deg, #c1495c, var(--crimson));
-  box-shadow: 0 2px 0 rgba(90, 20, 30, 0.4);
+.cta-pill--maroon {
+  background: linear-gradient(180deg, #94293a, var(--maroon));
+  box-shadow: 0 2px 0 rgba(60, 10, 16, 0.4);
 }
 
 .cta-pill--sm {
@@ -186,7 +186,7 @@ button {
 
 .dropzone {
   flex: 1;
-  border: 1.5px dashed var(--crimson-soft);
+  border: 1.5px dashed var(--maroon-soft);
   border-radius: 2px;
   display: flex;
   flex-direction: column;
@@ -202,8 +202,8 @@ button {
 
 .dropzone:hover,
 .dropzone.dragging {
-  background: rgba(166, 40, 60, 0.05);
-  border-color: var(--crimson);
+  background: rgba(110, 18, 32, 0.05);
+  border-color: var(--maroon);
 }
 
 .dropzone h3 {
@@ -270,7 +270,7 @@ button {
   height: 22px;
   border-radius: 50%;
   border: 2px solid var(--line);
-  border-top-color: var(--crimson);
+  border-top-color: var(--maroon);
   animation: spin 0.8s linear infinite;
 }
 
@@ -292,7 +292,7 @@ button {
 .result-card .kind {
   font-family: "IBM Plex Mono", monospace;
   font-size: 11.5px;
-  color: var(--crimson);
+  color: var(--maroon);
 }
 
 .result-card h3 {
@@ -350,10 +350,10 @@ button {
 }
 
 .btn-download {
-  background: linear-gradient(180deg, #b8384c, var(--crimson));
+  background: linear-gradient(180deg, #94293a, var(--maroon));
   color: white;
   width: 100%;
-  box-shadow: 0 2px 0 rgba(90, 20, 30, 0.4);
+  box-shadow: 0 2px 0 rgba(60, 10, 16, 0.4);
 }
 
 .btn-download:hover {
@@ -362,7 +362,7 @@ button {
 
 .btn-download:active {
   transform: translateY(1px);
-  box-shadow: 0 1px 0 rgba(90, 20, 30, 0.4);
+  box-shadow: 0 1px 0 rgba(60, 10, 16, 0.4);
 }
 
 .actions {
@@ -372,7 +372,7 @@ button {
 .error-note {
   margin-top: 14px;
   font-size: 13px;
-  color: var(--crimson);
+  color: var(--maroon);
   line-height: 1.5;
 }
 
@@ -383,112 +383,186 @@ button {
   text-align: center;
 }
 
-/* ---- pravaah toggle bar ---- */
+/* ---- back link ---- */
 
-.pravaah-bar {
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 13.5px;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 24px;
+}
+
+.back-link:hover {
+  color: var(--maroon);
+}
+
+/* ---- mode select (home) ---- */
+
+.mode-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 700px) {
+  .mode-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.mode-card {
+  text-align: left;
+  border: 1.5px solid var(--ink);
+  background: var(--paper);
+  padding: 32px 28px;
+  cursor: pointer;
+  font-family: inherit;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  border: 1px solid var(--line);
-  background: white;
-  padding: 12px 18px;
+  gap: 8px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 6px 6px 0 rgba(32, 29, 26, 0.08);
+}
+
+.mode-card:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 9px 9px 0 rgba(32, 29, 26, 0.12);
+}
+
+.mode-card--maroon:hover {
+  box-shadow: 9px 9px 0 rgba(110, 18, 32, 0.2);
+}
+
+.mode-card--gold:hover {
+  box-shadow: 9px 9px 0 rgba(169, 120, 31, 0.25);
+}
+
+.mode-icon {
+  font-size: 30px;
+}
+
+.mode-card h2 {
+  font-size: 24px;
+}
+
+.mode-card p {
+  color: var(--ink-soft);
+  font-size: 14px;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.mode-cta {
+  margin-top: 8px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.mode-card--maroon .mode-cta {
+  color: var(--maroon);
+}
+
+.mode-card--gold .mode-cta {
+  color: var(--gold);
+}
+
+/* ---- pravaah screen ---- */
+
+.pravaah-screen {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: 0;
+  border: 1.5px solid var(--ink);
+  background: var(--paper);
+  box-shadow: 8px 8px 0 rgba(110, 18, 32, 0.12), 0 20px 40px rgba(32, 29, 26, 0.08);
+}
+
+@media (max-width: 780px) {
+  .pravaah-screen {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pravaah-form {
+  padding: 32px;
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 780px) {
+  .pravaah-form {
+    border-right: none;
+    border-bottom: 1px solid var(--line);
+  }
+}
+
+.field-label {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11.5px;
+  color: var(--ink-soft);
+  margin-bottom: 6px;
+  display: block;
+}
+
+.pravaah-author {
+  width: 100%;
+  border: none;
+  border-bottom: 1.5px solid var(--maroon-soft);
+  background: transparent;
+  padding: 6px 2px;
+  font-size: 15px;
+  color: var(--ink);
+  font-family: inherit;
   margin-bottom: 20px;
 }
 
-.pravaah-row {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 16px;
-}
-
-.pravaah-points-wrap {
-  border-top: 1px solid var(--line);
-  padding-top: 12px;
+.pravaah-author:focus {
+  outline: none;
+  border-bottom-color: var(--maroon);
 }
 
 .pravaah-points {
   width: 100%;
   resize: vertical;
   border: 1px solid var(--line);
-  background: var(--paper);
-  padding: 10px 12px;
-  font-size: 13.5px;
-  line-height: 1.55;
+  background: white;
+  padding: 12px 14px;
+  font-size: 14px;
+  line-height: 1.6;
   font-family: inherit;
   color: var(--ink);
+  margin-bottom: 16px;
 }
 
 .pravaah-points:focus {
   outline: none;
-  border-color: var(--crimson-soft);
+  border-color: var(--maroon-soft);
 }
 
-.pravaah-switch {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.pravaah-photo-add {
   cursor: pointer;
+  display: inline-block;
+  margin-bottom: 8px;
 }
 
-.pravaah-switch input {
-  position: absolute;
-  opacity: 0;
-  width: 0;
-  height: 0;
+.pravaah-photo-add input {
+  display: none;
 }
 
-.pravaah-track {
-  width: 38px;
-  height: 21px;
-  background: var(--line);
-  border-radius: 100px;
-  position: relative;
-  transition: background 0.15s ease;
-  flex-shrink: 0;
-}
-
-.pravaah-thumb {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 17px;
-  height: 17px;
-  background: white;
-  border-radius: 50%;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
-  transition: transform 0.15s ease;
-}
-
-.pravaah-switch input:checked + .pravaah-track {
-  background: var(--crimson);
-}
-
-.pravaah-switch input:checked + .pravaah-track .pravaah-thumb {
-  transform: translateX(17px);
-}
-
-.pravaah-label {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--ink);
-}
-
-.pravaah-author {
-  flex: 1;
-  min-width: 200px;
-  border: none;
-  border-bottom: 1.5px solid var(--crimson-soft);
-  background: transparent;
-  padding: 6px 2px;
-  font-size: 14px;
-  color: var(--ink);
-  font-family: inherit;
-}
-
-.pravaah-author:focus {
-  outline: none;
-  border-bottom-color: var(--crimson);
+.pravaah-result {
+  padding: 32px;
+  background: var(--paper);
+  display: flex;
+  flex-direction: column;
 }
 
 /* ---- multi-page queue ---- */
@@ -592,7 +666,7 @@ button {
 }
 
 .page-tag.err {
-  background: var(--crimson);
+  background: var(--maroon);
   color: white;
 }
 
@@ -647,7 +721,7 @@ button {
 }
 
 .result-row.error {
-  border-color: var(--crimson-soft);
+  border-color: var(--maroon-soft);
 }
 
 .result-num {
@@ -676,13 +750,13 @@ button {
 }
 
 .result-status.err {
-  color: var(--crimson);
+  color: var(--maroon);
 }
 
 .result-link {
   font-family: "IBM Plex Mono", monospace;
   font-size: 12px;
-  color: var(--crimson);
+  color: var(--maroon);
   text-decoration: none;
   overflow: hidden;
   text-overflow: ellipsis;

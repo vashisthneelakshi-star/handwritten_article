@@ -3,6 +3,7 @@
 import { useCallback, useRef, useState } from "react";
 import JSZip from "jszip";
 
+type Screen = "home" | "pravaah" | "convert";
 type PageStatus = "ready" | "loading" | "done" | "error";
 
 type Page = {
@@ -25,15 +26,39 @@ type ComposeResult = {
 
 let nextId = 0;
 
+function HeroMark() {
+  return (
+    <svg className="hero-mark" viewBox="0 0 220 120" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M8 78 C 24 40, 40 100, 56 60 S 88 30, 104 66" stroke="var(--ink)" strokeWidth="2.4" strokeLinecap="round" fill="none" />
+      <path d="M8 92 C 30 76, 46 100, 64 82 S 92 62, 104 84" stroke="var(--maroon)" strokeWidth="2.4" strokeLinecap="round" fill="none" opacity="0.75" />
+      <path d="M120 66 L 152 66" stroke="var(--ink-soft)" strokeWidth="1.6" strokeDasharray="1 6" strokeLinecap="round" />
+      <path d="M144 59 L 154 66 L 144 73" stroke="var(--ink-soft)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <g transform="translate(168,34)">
+        <rect x="0" y="0" width="44" height="58" fill="var(--paper)" stroke="var(--ink)" strokeWidth="1.6" />
+        <line x1="8" y1="16" x2="36" y2="16" stroke="var(--ink)" strokeWidth="1.4" />
+        <line x1="8" y1="26" x2="36" y2="26" stroke="var(--ink)" strokeWidth="1.4" />
+        <line x1="8" y1="36" x2="28" y2="36" stroke="var(--gold)" strokeWidth="1.4" />
+        <line x1="8" y1="46" x2="32" y2="46" stroke="var(--ink)" strokeWidth="1.4" />
+      </g>
+    </svg>
+  );
+}
+
 export default function Home() {
+  const [screen, setScreen] = useState<Screen>("home");
+
+  // ---- convert-mode state ----
   const [pages, setPages] = useState<Page[]>([]);
   const [dragging, setDragging] = useState(false);
   const [converting, setConverting] = useState(false);
-  const [composeMode, setComposeMode] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // ---- pravaah-mode state ----
   const [authorName, setAuthorName] = useState("Bhawnesh Jain, Rajasthan Patrika");
   const [typedPoints, setTypedPoints] = useState("");
+  const [pravaahPages, setPravaahPages] = useState<Page[]>([]);
+  const pravaahInputRef = useRef<HTMLInputElement>(null);
   const [composeResult, setComposeResult] = useState<ComposeResult>({ status: "idle" });
-  const inputRef = useRef<HTMLInputElement>(null);
 
   const addFiles = useCallback((files: FileList | File[] | null | undefined) => {
     if (!files) return;
@@ -50,9 +75,23 @@ export default function Home() {
     ]);
   }, []);
 
-  const removePage = (id: string) => {
-    setPages((prev) => prev.filter((p) => p.id !== id));
-  };
+  const addPravaahFiles = useCallback((files: FileList | File[] | null | undefined) => {
+    if (!files) return;
+    const list = Array.from(files).filter((f) => f.type.startsWith("image/"));
+    if (!list.length) return;
+    setPravaahPages((prev) => [
+      ...prev,
+      ...list.map((f) => ({
+        id: String(nextId++),
+        file: f,
+        previewUrl: URL.createObjectURL(f),
+        status: "ready" as PageStatus,
+      })),
+    ]);
+  }, []);
+
+  const removePage = (id: string) => setPages((prev) => prev.filter((p) => p.id !== id));
+  const removePravaahPage = (id: string) => setPravaahPages((prev) => prev.filter((p) => p.id !== id));
 
   const onDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -87,12 +126,7 @@ export default function Home() {
     const targets = pages.filter((p) => p.status === "ready" || p.status === "error");
     if (!targets.length) return;
     setConverting(true);
-
-    setPages((prev) =>
-      prev.map((p) =>
-        targets.find((t) => t.id === p.id) ? { ...p, status: "loading" } : p
-      )
-    );
+    setPages((prev) => prev.map((p) => (targets.find((t) => t.id === p.id) ? { ...p, status: "loading" } : p)));
 
     const CONCURRENCY = 2;
     let cursor = 0;
@@ -100,9 +134,7 @@ export default function Home() {
       while (cursor < targets.length) {
         const page = targets[cursor++];
         const patch = await convertOne(page);
-        setPages((prev) =>
-          prev.map((p) => (p.id === page.id ? { ...p, ...patch } : p))
-        );
+        setPages((prev) => prev.map((p) => (p.id === page.id ? { ...p, ...patch } : p)));
       }
     }
     await Promise.all(Array.from({ length: CONCURRENCY }, worker));
@@ -132,12 +164,17 @@ export default function Home() {
     a.click();
   };
 
+  const clearConvert = () => {
+    setPages([]);
+    if (inputRef.current) inputRef.current.value = "";
+  };
+
   const composeArticle = async () => {
-    if (!pages.length && !typedPoints.trim()) return;
+    if (!pravaahPages.length && !typedPoints.trim()) return;
     setComposeResult({ status: "loading" });
     try {
       const form = new FormData();
-      pages.forEach((p) => form.append("file", p.file));
+      pravaahPages.forEach((p) => form.append("file", p.file));
       if (typedPoints.trim()) form.append("typedPoints", typedPoints.trim());
       form.append("author", authorName || "Bhawnesh Jain, Rajasthan Patrika");
       const res = await fetch("/api/compose", { method: "POST", body: form });
@@ -157,251 +194,264 @@ export default function Home() {
     }
   };
 
-  const clearAll = () => {
-    setPages([]);
+  const clearPravaah = () => {
+    setPravaahPages([]);
     setTypedPoints("");
     setComposeResult({ status: "idle" });
-    if (inputRef.current) inputRef.current.value = "";
+    if (pravaahInputRef.current) pravaahInputRef.current.value = "";
   };
 
   const doneCount = pages.filter((p) => p.status === "done").length;
   const hasConvertible = pages.some((p) => p.status === "ready" || p.status === "error");
+
+  const goHome = () => setScreen("home");
 
   return (
     <main className="shell">
       <div className="masthead">
         <div className="masthead-text">
           <span className="copy-badge">
-            {pages.length ? `${pages.length} page${pages.length > 1 ? "s" : ""} in queue` : "handwriting → files"}
+            {screen === "home" ? "choose a tool" : screen === "pravaah" ? "pravaah mode" : "convert mode"}
           </span>
           <h1>Likhavat</h1>
-          <p>
-            Upload handwritten pages or spreadsheet screenshots — Hindi, English, or
-            mixed. Each page comes back as its own Word or Excel file.
-          </p>
+          {screen === "home" && (
+            <p>Two tools, one place — compose a Pravaah write-up in Bhawnesh Jain's voice, or convert handwritten pages and spreadsheet screenshots into Word and Excel files.</p>
+          )}
         </div>
-        <svg className="hero-mark" viewBox="0 0 220 120" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <path d="M8 78 C 24 40, 40 100, 56 60 S 88 30, 104 66" stroke="var(--ink)" strokeWidth="2.4" strokeLinecap="round" fill="none" />
-          <path d="M8 92 C 30 76, 46 100, 64 82 S 92 62, 104 84" stroke="var(--crimson)" strokeWidth="2.4" strokeLinecap="round" fill="none" opacity="0.75" />
-          <path d="M120 66 L 152 66" stroke="var(--ink-soft)" strokeWidth="1.6" strokeDasharray="1 6" strokeLinecap="round" />
-          <path d="M144 59 L 154 66 L 144 73" stroke="var(--ink-soft)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-          <g transform="translate(168,34)">
-            <rect x="0" y="0" width="44" height="58" fill="var(--paper)" stroke="var(--ink)" strokeWidth="1.6" />
-            <line x1="8" y1="16" x2="36" y2="16" stroke="var(--ink)" strokeWidth="1.4" />
-            <line x1="8" y1="26" x2="36" y2="26" stroke="var(--ink)" strokeWidth="1.4" />
-            <line x1="8" y1="36" x2="28" y2="36" stroke="var(--crimson)" strokeWidth="1.4" />
-            <line x1="8" y1="46" x2="32" y2="46" stroke="var(--ink)" strokeWidth="1.4" />
-          </g>
-        </svg>
+        <HeroMark />
       </div>
 
-      <div className={`pravaah-bar ${composeMode ? "pravaah-bar--open" : ""}`}>
-        <div className="pravaah-row">
-          <label className="pravaah-switch">
-            <input
-              type="checkbox"
-              checked={composeMode}
-              onChange={(e) => setComposeMode(e.target.checked)}
-            />
-            <span className="pravaah-track">
-              <span className="pravaah-thumb" />
-            </span>
-            <span className="pravaah-label">Points se pravaah likhein</span>
-          </label>
-          {composeMode && (
+      {screen !== "home" && (
+        <button className="back-link" onClick={goHome}>
+          ← Back to tools
+        </button>
+      )}
+
+      {screen === "home" && (
+        <div className="mode-grid">
+          <button className="mode-card mode-card--maroon" onClick={() => setScreen("pravaah")}>
+            <span className="mode-icon">✍️</span>
+            <h2>Pravaah Likhein</h2>
+            <p>Type or upload your points — get back one flowing Hindi write-up in Bhawnesh Jain's voice, as a Word file.</p>
+            <span className="mode-cta">Open →</span>
+          </button>
+          <button className="mode-card mode-card--gold" onClick={() => setScreen("convert")}>
+            <span className="mode-icon">🖼️</span>
+            <h2>Convert Files</h2>
+            <p>Upload handwritten pages or spreadsheet screenshots. Get back Word or Excel files, one per page.</p>
+            <span className="mode-cta">Open →</span>
+          </button>
+        </div>
+      )}
+
+      {screen === "pravaah" && (
+        <div className="pravaah-screen">
+          <div className="pravaah-form">
+            <label className="field-label">Kiske liye likhna hai</label>
             <input
               className="pravaah-author"
               type="text"
               value={authorName}
               onChange={(e) => setAuthorName(e.target.value)}
-              placeholder="Kiske liye likhna hai"
+              placeholder="e.g. Bhawnesh Jain, Rajasthan Patrika"
             />
-          )}
-        </div>
-        {composeMode && (
-          <div className="pravaah-points-wrap">
+
+            <label className="field-label">Points</label>
             <textarea
               className="pravaah-points"
               value={typedPoints}
               onChange={(e) => setTypedPoints(e.target.value)}
-              placeholder="Apne points yahan type karein — ek line mein ek point. Chahe to neeche pages bhi upload kar sakte hain, ya dono ek saath use karein."
-              rows={5}
+              placeholder="Apne points yahan type karein — jitni detail utna behtar. Har fact, naam, date, sawaal shaamil karein."
+              rows={8}
             />
-          </div>
-        )}
-      </div>
 
-      <div className="spread">
-        <section
-          className="pane pane--left"
-          onDragOver={(e) => {
-            e.preventDefault();
-            setDragging(true);
-          }}
-          onDragLeave={() => setDragging(false)}
-          onDrop={onDrop}
-        >
-          {pages.length > 0 && (
-            <div className="page-list">
-              {pages.map((p, i) => (
-                <div className="page-card" key={p.id} style={{ ["--tilt" as any]: `${((i % 5) - 2) * 0.6}deg` }}>
-                  <span className="page-num">{i + 1}</span>
-                  <img src={p.previewUrl} alt={`Page ${i + 1}`} />
-                  <button
-                    type="button"
-                    className="page-remove"
-                    onClick={() => removePage(p.id)}
-                    aria-label="Remove page"
-                    disabled={p.status === "loading"}
-                  >
-                    ×
-                  </button>
-                  {p.status === "loading" && <div className="page-overlay"><div className="spinner spinner-sm" /></div>}
-                  {p.status === "done" && <span className="page-tag ok">{p.resultKind === "table" ? "xlsx" : "docx"}</span>}
-                  {p.status === "error" && <span className="page-tag err" title={p.errorMsg}>retry</span>}
-                </div>
-              ))}
-            </div>
-          )}
-
-          <label className={`dropzone ${dragging ? "dragging" : ""} ${pages.length ? "dropzone-compact" : ""}`}>
-            <span className={`cta-pill cta-pill--gold ${pages.length ? "cta-pill--sm" : ""}`}>
-              {pages.length ? "+ Add Page" : "Upload File Here"}
-            </span>
-            <p>
-              {pages.length
-                ? "Drag more in, or tap to browse."
-                : "Or tap to choose one or several photos at once."}
-            </p>
-            <input
-              ref={inputRef}
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={(e) => addFiles(e.target.files)}
-            />
-          </label>
-
-          <div className="actions">
-            <button
-              className="btn btn-primary"
-              disabled={
-                composeMode
-                  ? (!pages.length && !typedPoints.trim()) || composeResult.status === "loading"
-                  : !hasConvertible || converting
-              }
-              onClick={composeMode ? composeArticle : convertAll}
-            >
-              {composeMode
-                ? composeResult.status === "loading"
-                  ? "Pravaah likh rahe hain…"
-                  : "Pravaah Likhein"
-                : converting
-                ? "Reading your pages…"
-                : doneCount > 0
-                ? `Convert remaining (${pages.filter((p) => p.status === "ready" || p.status === "error").length})`
-                : `Convert ${pages.length > 1 ? `all ${pages.length} pages` : "page"}`}
-            </button>
-            {(pages.length > 0 || typedPoints.trim()) && !converting && composeResult.status !== "loading" && (
-              <button className="btn btn-ghost" onClick={clearAll}>
-                Clear all
-              </button>
+            {pravaahPages.length > 0 && (
+              <div className="page-list">
+                {pravaahPages.map((p, i) => (
+                  <div className="page-card" key={p.id} style={{ ["--tilt" as any]: `${((i % 5) - 2) * 0.6}deg` }}>
+                    <span className="page-num">{i + 1}</span>
+                    <img src={p.previewUrl} alt={`Page ${i + 1}`} />
+                    <button type="button" className="page-remove" onClick={() => removePravaahPage(p.id)} aria-label="Remove page">
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
             )}
-          </div>
-        </section>
 
-        <section className="pane pane--right">
-          {composeMode ? (
-            composeResult.status === "idle" ? (
+            <label className="pravaah-photo-add">
+              <span className="cta-pill cta-pill--gold cta-pill--sm">+ Photos bhi jodein (optional)</span>
+              <input ref={pravaahInputRef} type="file" accept="image/*" multiple onChange={(e) => addPravaahFiles(e.target.files)} />
+            </label>
+
+            <div className="actions">
+              <button
+                className="btn btn-primary"
+                disabled={(!pravaahPages.length && !typedPoints.trim()) || composeResult.status === "loading"}
+                onClick={composeArticle}
+              >
+                {composeResult.status === "loading" ? "Pravaah likh rahe hain…" : "Pravaah Likhein"}
+              </button>
+              {(pravaahPages.length > 0 || typedPoints.trim()) && composeResult.status !== "loading" && (
+                <button className="btn btn-ghost" onClick={clearPravaah}>
+                  Clear all
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="pravaah-result">
+            {composeResult.status === "idle" && (
               <div className="result-slot idle">
-                <span className="cta-pill cta-pill--crimson">Your File Is Here</span>
+                <span className="cta-pill cta-pill--maroon">Your File Is Here</span>
                 <svg className="idle-illustration" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                   <rect x="24" y="12" width="40" height="52" fill="white" stroke="var(--line)" strokeWidth="1.6" />
                   <rect x="34" y="22" width="42" height="54" fill="var(--paper)" stroke="var(--ink)" strokeWidth="1.6" />
                   <line x1="42" y1="36" x2="68" y2="36" stroke="var(--ink-soft)" strokeWidth="1.4" />
                   <line x1="42" y1="45" x2="68" y2="45" stroke="var(--ink-soft)" strokeWidth="1.4" />
-                  <line x1="42" y1="54" x2="60" y2="54" stroke="var(--crimson)" strokeWidth="1.4" />
+                  <line x1="42" y1="54" x2="60" y2="54" stroke="var(--maroon)" strokeWidth="1.4" />
                   <line x1="42" y1="63" x2="64" y2="63" stroke="var(--ink-soft)" strokeWidth="1.4" />
                 </svg>
-                <p>Upload the points and press "Pravaah Likhein" — one flowing write-up comes back here.</p>
+                <p>Your points, written up in Bhawnesh Jain's voice, will appear here.</p>
               </div>
-            ) : composeResult.status === "loading" ? (
+            )}
+            {composeResult.status === "loading" && (
               <div className="result-slot">
-                <span className="cta-pill cta-pill--crimson cta-pill--sm">Your File Is Here</span>
+                <span className="cta-pill cta-pill--maroon cta-pill--sm">Your File Is Here</span>
                 <div className="spinner" />
-                <p style={{ color: "var(--ink-soft)", fontSize: 14 }}>
-                  Reading the points and writing it up for {authorName || "your author"}…
-                </p>
+                <p style={{ color: "var(--ink-soft)", fontSize: 14 }}>Reading the points and writing it up for {authorName || "your author"}…</p>
               </div>
-            ) : composeResult.status === "done" ? (
+            )}
+            {composeResult.status === "done" && (
               <div className="result-slot">
                 <div className="result-card">
                   <p className="kind">pravaah · {authorName}</p>
                   <h3>Write-up ready</h3>
-                  <p>Composed from {pages.length} page{pages.length > 1 ? "s" : ""} of points.</p>
+                  <p>Composed from your points{pravaahPages.length ? ` and ${pravaahPages.length} photo page${pravaahPages.length > 1 ? "s" : ""}` : ""}.</p>
                   <a href={composeResult.downloadUrl} download={composeResult.downloadName} className="btn btn-download">
                     Download {composeResult.downloadName}
                   </a>
                 </div>
               </div>
-            ) : (
+            )}
+            {composeResult.status === "error" && (
               <div className="result-slot idle">
                 <p className="error-note">{composeResult.errorMsg}</p>
               </div>
-            )
-          ) : pages.length === 0 ? (
-            <div className="result-slot idle">
-              <span className="cta-pill cta-pill--crimson">Your File Is Here</span>
-              <svg className="idle-illustration" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                <rect x="24" y="12" width="40" height="52" fill="white" stroke="var(--line)" strokeWidth="1.6" />
-                <rect x="34" y="22" width="42" height="54" fill="var(--paper)" stroke="var(--ink)" strokeWidth="1.6" />
-                <line x1="42" y1="36" x2="68" y2="36" stroke="var(--ink-soft)" strokeWidth="1.4" />
-                <line x1="42" y1="45" x2="68" y2="45" stroke="var(--ink-soft)" strokeWidth="1.4" />
-                <line x1="42" y1="54" x2="60" y2="54" stroke="var(--crimson)" strokeWidth="1.4" />
-                <line x1="42" y1="63" x2="64" y2="63" stroke="var(--ink-soft)" strokeWidth="1.4" />
-              </svg>
-              <p>Converted Word and Excel files will appear here, numbered to match your pages.</p>
-            </div>
-          ) : (
-            <>
-              <span className="cta-pill cta-pill--crimson cta-pill--sm" style={{ alignSelf: "flex-start", marginBottom: 14 }}>
-                Your File Is Here
-              </span>
-              <div className="result-list">
+            )}
+          </div>
+        </div>
+      )}
+
+      {screen === "convert" && (
+        <div className="spread">
+          <section
+            className="pane pane--left"
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragging(true);
+            }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={onDrop}
+          >
+            {pages.length > 0 && (
+              <div className="page-list">
                 {pages.map((p, i) => (
-                  <div className={`result-row ${p.status}`} key={p.id}>
-                    <span className="result-num">{i + 1}</span>
-                    <div className="result-body">
-                      {p.status === "ready" && <span className="result-status">waiting to convert</span>}
-                      {p.status === "loading" && <span className="result-status">reading…</span>}
-                      {p.status === "done" && (
-                        <>
-                          <span className="result-status ok">
-                            {p.resultKind === "table" ? "Excel file ready" : "Word file ready"}
-                          </span>
-                          <a href={p.downloadUrl} download={p.downloadName} className="result-link">
-                            {p.downloadName}
-                          </a>
-                        </>
-                      )}
-                      {p.status === "error" && (
-                        <span className="result-status err">{p.errorMsg || "couldn't read this one"}</span>
-                      )}
-                    </div>
+                  <div className="page-card" key={p.id} style={{ ["--tilt" as any]: `${((i % 5) - 2) * 0.6}deg` }}>
+                    <span className="page-num">{i + 1}</span>
+                    <img src={p.previewUrl} alt={`Page ${i + 1}`} />
+                    <button
+                      type="button"
+                      className="page-remove"
+                      onClick={() => removePage(p.id)}
+                      aria-label="Remove page"
+                      disabled={p.status === "loading"}
+                    >
+                      ×
+                    </button>
+                    {p.status === "loading" && <div className="page-overlay"><div className="spinner spinner-sm" /></div>}
+                    {p.status === "done" && <span className="page-tag ok">{p.resultKind === "table" ? "xlsx" : "docx"}</span>}
+                    {p.status === "error" && <span className="page-tag err" title={p.errorMsg}>retry</span>}
                   </div>
                 ))}
               </div>
-              {doneCount > 0 && (
-                <button className="btn btn-download" onClick={downloadAll}>
-                  {doneCount > 1 ? `Download all ${doneCount} files (.zip)` : "Download file"}
+            )}
+
+            <label className={`dropzone ${dragging ? "dragging" : ""} ${pages.length ? "dropzone-compact" : ""}`}>
+              <span className={`cta-pill cta-pill--gold ${pages.length ? "cta-pill--sm" : ""}`}>
+                {pages.length ? "+ Add Page" : "Upload File Here"}
+              </span>
+              <p>{pages.length ? "Drag more in, or tap to browse." : "Or tap to choose one or several photos at once."}</p>
+              <input ref={inputRef} type="file" accept="image/*" multiple onChange={(e) => addFiles(e.target.files)} />
+            </label>
+
+            <div className="actions">
+              <button className="btn btn-primary" disabled={!hasConvertible || converting} onClick={convertAll}>
+                {converting
+                  ? "Reading your pages…"
+                  : doneCount > 0
+                  ? `Convert remaining (${pages.filter((p) => p.status === "ready" || p.status === "error").length})`
+                  : `Convert ${pages.length > 1 ? `all ${pages.length} pages` : "page"}`}
+              </button>
+              {pages.length > 0 && !converting && (
+                <button className="btn btn-ghost" onClick={clearConvert}>
+                  Clear all
                 </button>
               )}
-            </>
-          )}
-        </section>
-      </div>
+            </div>
+          </section>
 
-      <p className="footnote">Works best with clear, well-lit photos, one page per image.</p>
+          <section className="pane pane--right">
+            {pages.length === 0 ? (
+              <div className="result-slot idle">
+                <span className="cta-pill cta-pill--maroon">Your File Is Here</span>
+                <svg className="idle-illustration" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <rect x="24" y="12" width="40" height="52" fill="white" stroke="var(--line)" strokeWidth="1.6" />
+                  <rect x="34" y="22" width="42" height="54" fill="var(--paper)" stroke="var(--ink)" strokeWidth="1.6" />
+                  <line x1="42" y1="36" x2="68" y2="36" stroke="var(--ink-soft)" strokeWidth="1.4" />
+                  <line x1="42" y1="45" x2="68" y2="45" stroke="var(--ink-soft)" strokeWidth="1.4" />
+                  <line x1="42" y1="54" x2="60" y2="54" stroke="var(--maroon)" strokeWidth="1.4" />
+                  <line x1="42" y1="63" x2="64" y2="63" stroke="var(--ink-soft)" strokeWidth="1.4" />
+                </svg>
+                <p>Converted Word and Excel files will appear here, numbered to match your pages.</p>
+              </div>
+            ) : (
+              <>
+                <span className="cta-pill cta-pill--maroon cta-pill--sm" style={{ alignSelf: "flex-start", marginBottom: 14 }}>
+                  Your File Is Here
+                </span>
+                <div className="result-list">
+                  {pages.map((p, i) => (
+                    <div className={`result-row ${p.status}`} key={p.id}>
+                      <span className="result-num">{i + 1}</span>
+                      <div className="result-body">
+                        {p.status === "ready" && <span className="result-status">waiting to convert</span>}
+                        {p.status === "loading" && <span className="result-status">reading…</span>}
+                        {p.status === "done" && (
+                          <>
+                            <span className="result-status ok">{p.resultKind === "table" ? "Excel file ready" : "Word file ready"}</span>
+                            <a href={p.downloadUrl} download={p.downloadName} className="result-link">
+                              {p.downloadName}
+                            </a>
+                          </>
+                        )}
+                        {p.status === "error" && <span className="result-status err">{p.errorMsg || "couldn't read this one"}</span>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {doneCount > 0 && (
+                  <button className="btn btn-download" onClick={downloadAll}>
+                    {doneCount > 1 ? `Download all ${doneCount} files (.zip)` : "Download file"}
+                  </button>
+                )}
+              </>
+            )}
+          </section>
+        </div>
+      )}
+
+      {screen === "convert" && <p className="footnote">Works best with clear, well-lit photos, one page per image.</p>}
     </main>
   );
 }
