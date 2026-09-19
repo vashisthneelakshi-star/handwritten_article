@@ -44,42 +44,47 @@ export async function POST(req: NextRequest) {
 
   const form = await req.formData();
   const files = form.getAll("file") as File[];
+  const typedPoints = ((form.get("typedPoints") as string) || "").trim();
   const author = (form.get("author") as string) || "the author";
 
-  if (!files.length) {
-    return NextResponse.json({ error: "No pages uploaded." }, { status: 400 });
+  if (!files.length && !typedPoints) {
+    return NextResponse.json({ error: "No points given — type some or upload pages." }, { status: 400 });
   }
 
-  let extracted: string[];
-  try {
-    const CONCURRENCY = 3;
-    const results: string[] = new Array(files.length);
-    let cursor = 0;
-    async function worker() {
-      while (cursor < files.length) {
-        const idx = cursor++;
-        const file = files[idx];
-        const arrayBuffer = await file.arrayBuffer();
-        const base64 = Buffer.from(arrayBuffer).toString("base64");
-        const mimeType = file.type || "image/jpeg";
-        results[idx] = await callGemini(apiKey, [
-          { text: EXTRACT_PROMPT },
-          { inline_data: { mime_type: mimeType, data: base64 } },
-        ]);
+  let extracted: string[] = [];
+  if (files.length) {
+    try {
+      const CONCURRENCY = 3;
+      const results: string[] = new Array(files.length);
+      let cursor = 0;
+      async function worker() {
+        while (cursor < files.length) {
+          const idx = cursor++;
+          const file = files[idx];
+          const arrayBuffer = await file.arrayBuffer();
+          const base64 = Buffer.from(arrayBuffer).toString("base64");
+          const mimeType = file.type || "image/jpeg";
+          results[idx] = await callGemini(apiKey, [
+            { text: EXTRACT_PROMPT },
+            { inline_data: { mime_type: mimeType, data: base64 } },
+          ]);
+        }
       }
+      await Promise.all(Array.from({ length: Math.min(CONCURRENCY, files.length) }, worker));
+      extracted = results;
+    } catch (err: any) {
+      return NextResponse.json(
+        { error: err.message || "Couldn't read one of the pages. Try clearer photos." },
+        { status: 502 }
+      );
     }
-    await Promise.all(Array.from({ length: Math.min(CONCURRENCY, files.length) }, worker));
-    extracted = results;
-  } catch (err: any) {
-    return NextResponse.json(
-      { error: err.message || "Couldn't read one of the pages. Try clearer photos." },
-      { status: 502 }
-    );
   }
 
-  const combinedPoints = extracted
-    .map((t, i) => `Page ${i + 1}:\n${t}`)
-    .join("\n\n");
+  const pointSections = [
+    ...(typedPoints ? [`Typed points:\n${typedPoints}`] : []),
+    ...extracted.map((t, i) => `Page ${i + 1}:\n${t}`),
+  ];
+  const combinedPoints = pointSections.join("\n\n");
 
   const STYLE_GUIDE = `You are writing in the voice of Bhawnesh Jain's "Pravaah" column for Rajasthan Patrika — a sharp, critical Hindi editorial column. Match this voice exactly:
 

@@ -31,6 +31,7 @@ export default function Home() {
   const [converting, setConverting] = useState(false);
   const [composeMode, setComposeMode] = useState(false);
   const [authorName, setAuthorName] = useState("Bhawnesh Jain, Rajasthan Patrika");
+  const [typedPoints, setTypedPoints] = useState("");
   const [composeResult, setComposeResult] = useState<ComposeResult>({ status: "idle" });
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -132,11 +133,12 @@ export default function Home() {
   };
 
   const composeArticle = async () => {
-    if (!pages.length) return;
+    if (!pages.length && !typedPoints.trim()) return;
     setComposeResult({ status: "loading" });
     try {
       const form = new FormData();
       pages.forEach((p) => form.append("file", p.file));
+      if (typedPoints.trim()) form.append("typedPoints", typedPoints.trim());
       form.append("author", authorName || "Bhawnesh Jain, Rajasthan Patrika");
       const res = await fetch("/api/compose", { method: "POST", body: form });
       if (!res.ok) {
@@ -157,6 +159,7 @@ export default function Home() {
 
   const clearAll = () => {
     setPages([]);
+    setTypedPoints("");
     setComposeResult({ status: "idle" });
     if (inputRef.current) inputRef.current.value = "";
   };
@@ -192,26 +195,39 @@ export default function Home() {
         </svg>
       </div>
 
-      <div className="pravaah-bar">
-        <label className="pravaah-switch">
-          <input
-            type="checkbox"
-            checked={composeMode}
-            onChange={(e) => setComposeMode(e.target.checked)}
-          />
-          <span className="pravaah-track">
-            <span className="pravaah-thumb" />
-          </span>
-          <span className="pravaah-label">Points se pravaah likhein</span>
-        </label>
+      <div className={`pravaah-bar ${composeMode ? "pravaah-bar--open" : ""}`}>
+        <div className="pravaah-row">
+          <label className="pravaah-switch">
+            <input
+              type="checkbox"
+              checked={composeMode}
+              onChange={(e) => setComposeMode(e.target.checked)}
+            />
+            <span className="pravaah-track">
+              <span className="pravaah-thumb" />
+            </span>
+            <span className="pravaah-label">Points se pravaah likhein</span>
+          </label>
+          {composeMode && (
+            <input
+              className="pravaah-author"
+              type="text"
+              value={authorName}
+              onChange={(e) => setAuthorName(e.target.value)}
+              placeholder="Kiske liye likhna hai"
+            />
+          )}
+        </div>
         {composeMode && (
-          <input
-            className="pravaah-author"
-            type="text"
-            value={authorName}
-            onChange={(e) => setAuthorName(e.target.value)}
-            placeholder="Kiske liye likhna hai"
-          />
+          <div className="pravaah-points-wrap">
+            <textarea
+              className="pravaah-points"
+              value={typedPoints}
+              onChange={(e) => setTypedPoints(e.target.value)}
+              placeholder="Apne points yahan type karein — ek line mein ek point. Chahe to neeche pages bhi upload kar sakte hain, ya dono ek saath use karein."
+              rows={5}
+            />
+          </div>
         )}
       </div>
 
@@ -271,7 +287,7 @@ export default function Home() {
               className="btn btn-primary"
               disabled={
                 composeMode
-                  ? !pages.length || composeResult.status === "loading"
+                  ? (!pages.length && !typedPoints.trim()) || composeResult.status === "loading"
                   : !hasConvertible || converting
               }
               onClick={composeMode ? composeArticle : convertAll}
@@ -286,7 +302,7 @@ export default function Home() {
                 ? `Convert remaining (${pages.filter((p) => p.status === "ready" || p.status === "error").length})`
                 : `Convert ${pages.length > 1 ? `all ${pages.length} pages` : "page"}`}
             </button>
-            {pages.length > 0 && !converting && composeResult.status !== "loading" && (
+            {(pages.length > 0 || typedPoints.trim()) && !converting && composeResult.status !== "loading" && (
               <button className="btn btn-ghost" onClick={clearAll}>
                 Clear all
               </button>
